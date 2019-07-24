@@ -1,5 +1,5 @@
-FROM ubuntu:16.04
-
+#FROM ubuntu:16.04
+FROM dqneo/ubuntu-build-essential:go
 #Common deps
 RUN apt-get update && apt-get -y install curl xz-utils wget bash-completion
 
@@ -77,43 +77,46 @@ RUN apt-get -y install git sudo
 #Required to use go get with git source
 RUN apt-get update && apt-get install -y git
 
-ENV GO_VERSION 1.9.4
+ENV GO_VERSION 1.10.4
 ENV GOPATH=/usr/local/go-packages
 ENV GO_ROOT=/usr/local/go
 ENV PATH $PATH:/usr/local/go/bin
 ENV PATH $PATH:${GOPATH}/bin
 
-RUN curl -sS https://storage.googleapis.com/golang/go$GO_VERSION.linux-amd64.tar.gz | tar -C /usr/local -xzf -
-RUN go get -u -v github.com/ramya-rao-a/go-outline && \
-    go get -u -v github.com/acroca/go-symbols && \
-    go get -u -v github.com/nsf/gocode && \
-    go get -u -v github.com/rogpeppe/godef && \
-    go get -u -v golang.org/x/tools/cmd/godoc && \
-    go get -u -v github.com/zmb3/gogetdoc && \
-    go get -u -v golang.org/x/lint/golint && \
-    go get -u -v github.com/fatih/gomodifytags && \
-    go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs && \
-    go get -u -v golang.org/x/tools/cmd/gorename && \
-    go get -u -v sourcegraph.com/sqs/goreturns && \
-    go get -u -v github.com/cweill/gotests/... && \
-    go get -u -v golang.org/x/tools/cmd/guru && \
-    go get -u -v github.com/josharian/impl && \
-    go get -u -v github.com/haya14busa/goplay/cmd/goplay && \
-    go get -u -v github.com/davidrjenni/reftools/cmd/fillstruct
+#RUN curl -sS https://storage.googleapis.com/golang/go$GO_VERSION.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+#RUN go get -u -v github.com/ramya-rao-a/go-outline && \
+#    go get -u -v github.com/acroca/go-symbols && \
+#    go get -u -v github.com/nsf/gocode && \
+#    go get -u -v github.com/rogpeppe/godef && \
+#    go get -u -v golang.org/x/tools/cmd/godoc && \
+#    go get -u -v github.com/zmb3/gogetdoc && \
+#    go get -u -v golang.org/x/lint/golint && \
+#    go get -u -v github.com/fatih/gomodifytags && \
+#    go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs && \
+#    go get -u -v golang.org/x/tools/cmd/gorename && \
+#    go get -u -v sourcegraph.com/sqs/goreturns && \
+#    go get -u -v github.com/cweill/gotests/... && \
+#    go get -u -v golang.org/x/tools/cmd/guru && \
+#    go get -u -v github.com/josharian/impl && \
+#    go get -u -v github.com/haya14busa/goplay/cmd/goplay && \
+#    go get -u -v github.com/davidrjenni/reftools/cmd/fillstruct
 
 ## kubectl
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin/kubectl
 
-# helm
+# helm v2.12.1
+ENV HELM_RELEASE 2.14.2
+
 RUN mkdir /tmp/helm && \
-    curl -L https://storage.googleapis.com/kubernetes-helm/helm-v2.12.1-linux-amd64.tar.gz -o /tmp/helm/helm.tar.gz && \
+    curl -L https://storage.googleapis.com/kubernetes-helm/helm-v$HELM_RELEASE-linux-amd64.tar.gz -o /tmp/helm/helm.tar.gz && \
     tar xvf /tmp/helm/helm.tar.gz -C /tmp/helm/ && \
     chmod +x /tmp/helm/linux-amd64/helm && \
     mv /tmp/helm/linux-amd64/helm /usr/local/bin/helm
 
-# kustomize
+# kustomize ------ https://github.com/kubernetes-sigs/kustomize/releases/download/v3.0.3/kustomize_3.0.3_linux_amd64
+ENV KUSTOMIZE_RELEASE 3.0.3
 RUN curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/v1.0.11/kustomize_1.0.11_linux_amd64 -o ./kustomize && \
     chmod +x ./kustomize && \
     mv ./kustomize /usr/local/bin/kustomize
@@ -136,6 +139,14 @@ RUN chmod g+rw /home && \
     mkdir -p /home/project && \
     chown -R theia:theia /home/theia && \
     chown -R theia:theia /home/project;
+#Jenkins-x
+ENV JX_RELEASE 2.0.506
+##Install jx  
+RUN mkdir /tmp/jx && \
+    curl -L https://github.com/jenkins-x/jx/releases/download/v$JX_RELEASE/jx-linux-amd64.tar.gz -o /tmp/jx/jx-linux-amd64.tar.gz && \
+    tar xvf /tmp/jx/jx-linux-amd64.tar.gz -C /tmp/jx/ && \ 
+    mv /tmp/jx/jx /usr/local/bin/jx && \
+    chmod +x /usr/local/bin/jx
 
 #Theia
 ##Needed for node-gyp, nsfw build
