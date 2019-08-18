@@ -140,13 +140,21 @@ RUN chmod g+rw /home && \
     chown -R theia:theia /home/theia && \
     chown -R theia:theia /home/project;
 #Jenkins-x
-ENV JX_RELEASE 2.0.506
+ENV JX_RELEASE 2.0.598
 ##Install jx  
 RUN mkdir /tmp/jx && \
     curl -L https://github.com/jenkins-x/jx/releases/download/v$JX_RELEASE/jx-linux-amd64.tar.gz -o /tmp/jx/jx-linux-amd64.tar.gz && \
     tar xvf /tmp/jx/jx-linux-amd64.tar.gz -C /tmp/jx/ && \ 
     mv /tmp/jx/jx /usr/local/bin/jx && \
     chmod +x /usr/local/bin/jx
+
+ENV HUB_RELEASE 2.12.3
+##Install hub
+RUN curl -L https://github.com/github/hub/releases/download/v${HUB_RELEASE}/hub-linux-amd64-${HUB_RELEASE}.tgz |tar xzv -C /tmp
+RUN cp /tmp/hub-linux-amd64-${HUB_RELEASE}/bin/hub /usr/local/bin/hub
+RUN rm -rf /tmp/hub-linux-amd64-${HUB_RELEASE}
+
+RUN apt-get update -y && apt-get install -y python build-essential apt-transport-https sudo
 
 #Theia
 ##Needed for node-gyp, nsfw build
@@ -163,6 +171,19 @@ ENV SHELL /bin/bash
 
 ADD ./server.js ./src-gen/backend/server.js
 RUN echo "source <(kubectl completion bash)\n" >> ~/.bashrc
+
+# Create an environment variable for the correct distribution
+ENV CLOUD_SDK_REPO="cloud-sdk-bionic"
+
+# Add the Cloud SDK distribution URI as a package source
+RUN echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+
+# Import the Google Cloud Platform public key
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+# Update the package list and install the Cloud SDK
+RUN sudo apt-get update -y && sudo apt-get install -y google-cloud-sdk
+
 
 CMD [ "yarn", "theia", "start", "/home/project", "--hostname=0.0.0.0" ]
 
